@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AegisGrid | Energy Sector Threat Intelligence</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <header>
+        <div class="header-left">
+            <img src="{{ url_for('static', filename='img/aegisgrid.png') }}" alt="AegisGrid"
+                style="height:30px; margin-right:12px; filter:brightness(0) invert(1)">
+            <div class="logo-wordmark">
+                <div class="header-title">AEGISGRID</div>
+                <div class="header-sub">AEGISGRID THREAT INTELLIGENCE PLATFORM</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <span id="last-updated">SYNCING...</span>
+            <div class="status-badge">● ONLINE</div>
+        </div>
+    </header>
+
+    <div class="ticker-wrap">
+        <div class="ticker-label">LIVE FEED</div>
+        <div class="ticker-inner" id="ticker">Initialising threat feed...</div>
+    </div>
+
+    <div class="main">
+
+        <!-- STAT CARDS -->
+        <div class="row row-4">
+            <div class="stat-card" style="--c:var(--accent)">
+                <div class="stat-label">Total Attacks</div>
+                <div class="stat-value" id="stat-total">0</div>
+                <div class="stat-delta" id="stat-total-sub">No data yet</div>
+                <div class="stat-bar">
+                    <div class="sbar" style="height:8px"></div>
+                    <div class="sbar" style="height:14px"></div>
+                    <div class="sbar" style="height:20px"></div>
+                    <div class="sbar" style="height:14px"></div>
+                    <div class="sbar" style="height:10px"></div>
+                </div>
+            </div>
+            <div class="stat-card" style="--c:var(--red)">
+                <div class="stat-label">Unique Attackers</div>
+                <div class="stat-value" id="stat-ips">0</div>
+                <div class="stat-delta">Distinct source IPs</div>
+            </div>
+            <div class="stat-card" style="--c:var(--amber)">
+                <div class="stat-label">Active Ports</div>
+                <div class="stat-value">5</div>
+                <div class="stat-delta">8888 · 502 · 8080 · 21 · 22</div>
+            </div>
+            <div class="stat-card" style="--c:var(--green)">
+                <div class="stat-label">Threat Level</div>
+                <div class="stat-value" id="stat-threat" style="font-size:18px;padding-top:5px">MONITORING</div>
+                <div class="stat-delta" id="s-threat-sub">System active</div>
+            </div>
+        </div>
+
+        <!-- MAP + TERMINAL -->
+        <div class="row row-2">
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">GLOBAL ATTACK ORIGINS</span>
+                    <span class="panel-badge" id="map-count">0 geolocated</span>
+                </div>
+                <div id="map-container">
+                    <!-- Simplified SVG world map paths -->
+                    <svg id="world-map" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="800" height="400" fill="#141417" />
+                        <!-- Simplified continent outlines as filled paths -->
+                        <!-- North America -->
+                        <path d="M80,60 L180,55 L200,80 L195,130 L170,160 L140,175 L110,170 L90,150 L70,120 Z"
+                            fill="#1c1c21" stroke="#27272f" stroke-width="0.8" />
+                        <!-- Central America -->
+                        <path d="M140,175 L170,160 L175,195 L155,210 L135,200 Z" fill="#1c1c21" stroke="#27272f"
+                            stroke-width="0.8" />
+                        <!-- South America -->
+                        <path d="M145,220 L195,215 L215,250 L220,310 L200,360 L170,365 L145,335 L130,280 L125,245 Z"
+                            fill="#1c1c21" stroke="#27272f" stroke-width="0.8" />
+                        <!-- Europe -->
+                        <path d="M340,45 L400,40 L415,60 L410,90 L385,100 L360,95 L340,80 Z" fill="#1c1c21"
+                            stroke="#27272f" stroke-width="0.8" />
+                        <!-- Africa -->
+                        <path
+                            d="M350,105 L420,100 L440,130 L445,200 L430,260 L400,285 L370,275 L345,240 L335,180 L340,130 Z"
+                            fill="#1c1c21" stroke="#27272f" stroke-width="0.8" />
+                        <!-- Asia -->
+                        <path d="M430,35 L620,30 L650,60 L645,100 L600,120 L540,130 L490,120 L440,110 L425,80 Z"
+                            fill="#1c1c21" stroke="#27272f" stroke-width="0.8" />
+                        <!-- South/SE Asia -->
+                        <path d="M500,125 L570,120 L590,150 L570,175 L530,180 L505,165 L495,145 Z" fill="#1c1c21"
+                            stroke="#27272f" stroke-width="0.8" />
+                        <!-- Oceania -->
+                        <path d="M600,230 L680,220 L700,255 L680,285 L635,280 L610,260 Z" fill="#1c1c21"
+                            stroke="#27272f" stroke-width="0.8" />
+                        <!-- Russia -->
+                        <path d="M430,35 L620,30 L650,25 L700,30 L700,60 L650,60 L620,30 Z" fill="#1c1c21"
+                            stroke="#27272f" stroke-width="0.8" />
+                        <!-- UK/Ireland -->
+                        <path d="M330,50 L345,48 L348,65 L335,68 L328,58 Z" fill="#1c1c21" stroke="#27272f"
+                            stroke-width="0.8" />
+
+                        <!-- Grid lines -->
+                        <line x1="0" y1="200" x2="800" y2="200" stroke="#27272f" stroke-width="0.5"
+                            stroke-dasharray="3,6" />
+                        <line x1="400" y1="0" x2="400" y2="400" stroke="#27272f" stroke-width="0.5"
+                            stroke-dasharray="3,6" />
+                        <line x1="0" y1="100" x2="800" y2="100" stroke="#1c1c21" stroke-width="0.3" />
+                        <line x1="0" y1="300" x2="800" y2="300" stroke="#1c1c21" stroke-width="0.3" />
+                        <line x1="200" y1="0" x2="200" y2="400" stroke="#1c1c21" stroke-width="0.3" />
+                        <line x1="600" y1="0" x2="600" y2="400" stroke="#1c1c21" stroke-width="0.3" />
+
+                        <!-- Attack dots will be injected here by JS -->
+                        <g id="attack-dots"></g>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- TERMINAL FEED -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">LIVE EVENT TERMINAL</span>
+                    <span class="panel-badge" id="term-count">0 events</span>
+                </div>
+                <div class="panel-body" style="padding:0">
+                    <div class="terminal" id="terminal">
+                        <div class="t-line"><span class="t-time">[SYSTEM]</span> <span class="t-type">Honeypot engine
+                                initialised</span></div>
+                        <div class="t-line"><span class="t-time">[SYSTEM]</span> <span class="t-type">Listening on ports
+                                8888 502 8080 21 22</span></div>
+                        <div class="t-line"><span class="t-time">[SYSTEM]</span> <span class="t-type">ML classifier
+                                loaded</span></div>
+                        <div class="t-line"><span class="t-time">[SYSTEM]</span> <span class="t-type">Dashboard
+                                connected to database</span></div>
+                        <div class="t-line"><span style="color:var(--muted)">Waiting for connections</span> <span
+                                class="t-cursor"></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TIMELINE + TYPES + TOP PORTS -->
+        <div class="row row-3">
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">ATTACK TIMELINE — 24h</span>
+                    <span class="panel-badge">hourly buckets</span>
+                </div>
+                <div class="panel-body">
+                    <div class="chart-h"><canvas id="timelineChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><span class="panel-title">ATTACK TYPES</span></div>
+                <div class="panel-body">
+                    <div class="chart-h"><canvas id="typeChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header"><span class="panel-title">TOP PORTS</span></div>
+                <div class="panel-body">
+                    <ul class="tlist" id="port-list">
+                        <li><span style="color:var(--muted);font-size:11px">No data yet</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOP IPs + COUNTRIES -->
+        <div class="row row-2">
+            <div class="panel">
+                <div class="panel-header"><span class="panel-title">TOP ATTACKER IPs</span></div>
+                <div class="panel-body">
+                    <ul class="tlist" id="ip-list">
+                        <li><span style="color:var(--muted);font-size:11px">No data yet</span></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-header"><span class="panel-title">ATTACK ORIGINS</span></div>
+                <div class="panel-body">
+                    <div class="chart-hsm"><canvas id="countryChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HOURLY HEATMAP -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">24-HOUR ACTIVITY HEATMAP</span>
+                <span class="panel-badge">each cell = 1 hour · darker = more attacks</span>
+            </div>
+            <div class="panel-body">
+                <div
+                    style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:4px">
+                    <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:00</span>
+                </div>
+                <div class="heat-grid" id="heatmap"></div>
+            </div>
+        </div>
+
+        <!-- LIVE LOG TABLE -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">LIVE ATTACK LOG</span>
+                <span class="panel-badge" id="log-count">0 entries</span>
+            </div>
+            <div class="controls">
+                <input class="ctrl-input" type="text" id="search-input" placeholder="Search IP / country / type...">
+                <select class="ctrl-select" id="type-filter">
+                    <option value="">All types</option>
+                    <option value="port_scan">Port scan</option>
+                    <option value="brute_force">Brute force</option>
+                    <option value="ics_probe">ICS probe</option>
+                    <option value="web_exploit">Web exploit</option>
+                    <option value="recon">Recon</option>
+                    <option value="unknown">Unknown</option>
+                </select>
+                <button class="ctrl-btn" onclick="applyFilter()">REFRESH</button>
+                <button class="cbtn cbtn-red" onclick="exportLogs()">EXPORT CSV</button>
+            </div>
+            <div class="table-scroll">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Timestamp</th>
+                            <th>Source IP</th>
+                            <th>Port</th>
+                            <th>Type</th>
+                            <th>Threat</th>
+                            <th>Country</th>
+                            <th>ISP</th>
+                            <th>Payload</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-tbody">
+                        <tr>
+                            <td colspan="9"
+                                style="text-align:center;color:var(--muted);padding:28px;font-family:var(--mono);font-size:11px">
+                                Waiting for connections... Run demo/scanner.py to generate test traffic.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div><!-- /wrap -->
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>
