@@ -11,6 +11,11 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from functools import wraps
 from flask import Response
+import hmac
+
+_PASSWORD = os.environ.get('AEGISGRID_PASSWORD', '').strip()
+if not _PASSWORD:
+    sys.exit("[FATAL] AEGISGRID_PASSWORD not set. Refusing to start.")
 
 app = Flask(__name__)
 
@@ -34,15 +39,16 @@ def handle_exception(e):
     return jsonify({"error": "Internal server error"}), 500
 
 def check_auth(username, password):
-    env_pass = os.environ.get('AEGISGRID_PASSWORD')
-    if not env_pass:
-        return True
-    return username == 'admin' and password == env_pass
+    return (
+        hmac.compare_digest(username, 'admin') and
+        hmac.compare_digest(password, _PASSWORD)
+    )
 
 def authenticate():
     return Response(
-    'Verification required.\n', 401,
-    {'WWW-Authenticate': 'Basic realm="AegisGrid SOC Login"'})
+        'Verification required.\n', 401,
+        {'WWW-Authenticate': 'Basic realm="AegisGrid SOC Login"'}
+    )
 
 def requires_auth(f):
     @wraps(f)
@@ -59,11 +65,13 @@ def dashboard():
     return render_template('index.html')
 
 @app.route('/api/stats')
+@requires_auth
 @limiter.limit("30 per minute")
 def api_stats():
     return jsonify(get_stats())
 
 @app.route('/api/attacks')
+@requires_auth
 @limiter.limit("30 per minute")
 def api_attacks():
     try:
@@ -96,6 +104,7 @@ def api_attacks():
     return jsonify(attacks[:limit])
 
 @app.route('/api/geopoints')
+@requires_auth
 @limiter.limit("15 per minute")
 def api_geopoints():
     rows = get_all_attacks(limit=200)
@@ -110,6 +119,7 @@ def api_geopoints():
     return jsonify(points)
 
 @app.route('/api/export')
+@requires_auth
 @limiter.limit("1 per minute")
 def export_logs():
     rows = get_all_attacks(limit=10000)
@@ -128,4 +138,4 @@ def export_logs():
     )
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(host='127.0.0.1', port=5000, debug=False)
