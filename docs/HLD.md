@@ -1,3 +1,22 @@
+<table width="100%">
+  <tr>
+    <td align="left">
+      <img src="images/ibm-logo.png" width="150"/>
+    </td>
+    <td align="right">
+      <img src="images/ncs-logo.jpg" width="150"/>
+    </td>
+  </tr>
+</table>
+
+<br><br>
+
+<p align="center">
+  <img src="images/uni-logo.png" width="160"/>
+</p>
+
+<br>
+
 <div align="center">
 
 # Yenepoya Institute of Arts, Science, Commerce, and Management
