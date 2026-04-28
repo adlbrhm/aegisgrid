@@ -272,7 +272,7 @@ async function fetchData() {
 
     setText('log-count', attacks.length + ' entries');
 
-    // Attack table
+    // Update log table
     const tbody = document.getElementById('log-tbody');
     if (tbody) {
       if (attacks.length === 0) {

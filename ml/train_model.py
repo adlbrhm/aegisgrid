@@ -57,7 +57,7 @@ def train():
     
     print(f"[ML] Training on {len(payloads)} samples")
     
-    # TF-IDF vectorization
+    # Configure TF-IDF vectorization
     vectorizer = TfidfVectorizer(
         analyzer='char_wb',
         ngram_range=(2, 4),
