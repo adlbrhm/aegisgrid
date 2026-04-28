@@ -1,4 +1,4 @@
-# run.py — System entrypoint
+# System entrypoint
 import threading
 import time
 import sys

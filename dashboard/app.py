@@ -1,4 +1,4 @@
-# app.py — Dashboard backend service
+# Dashboard backend service
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -19,6 +19,7 @@ if not _PASSWORD:
 
 app = Flask(__name__)
 
+# API rate limiting
 limiter = Limiter(
     get_remote_address,
     app=app,
@@ -122,6 +123,7 @@ def api_geopoints():
             })
     return jsonify(points)
 
+# Export logs as CSV
 @app.route('/api/export')
 @requires_auth
 @limiter.limit("1 per minute")
