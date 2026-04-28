@@ -12,11 +12,9 @@ def start_honeypot():
 
 def start_dashboard():
     time.sleep(2)
-    import sys, os
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'dashboard'))
     from dashboard.app import app
-    print("\n[*] Dashboard starting at http://127.0.0.1:5000")
-    app.run(host='127.0.0.1', port=5000, debug=False, use_reloader=False)
+    print("\n[*] Dashboard at http://0.0.0.0:5000")
+    app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
 
 if __name__ == '__main__':
     print("""
@@ -27,4 +25,4 @@ if __name__ == '__main__':
     """)
     hp_thread = threading.Thread(target=start_honeypot, daemon=True)
     hp_thread.start()
-    start_dashboard()
+    start_dashboard()
