@@ -1,5 +1,4 @@
-# scanner.py — Safe demo traffic generator
-# Simulates a port scanner connecting to your honeypot
+# Simulate port scanning behavior
 # USE ONLY ON YOUR OWN SYSTEM / AUTHORISED TARGETS
 #
 # Usage:
@@ -12,14 +11,14 @@ import random
 import sys
 
 TARGET_HOST = sys.argv[1] if len(sys.argv) > 1 else '127.0.0.1'
-PORTS = [8888, 8080, 2222]  # Active honeypot ports only — never scan real port 22
+PORTS = [8888, 8080, 2222]  # Configured honeypot ports only — avoid scanning production services
 
 print("[DEMO] Port Scanner Simulation Starting...")
 print(f"[DEMO] Target: {TARGET_HOST}")
 print("[DEMO] Ports: 8888 (SCADA), 8080 (HTTP), 2222 (Fake SSH)")
-print("[DEMO] This simulates attacker port scanning behaviour\n")
+print("[DEMO]\n")
 
-for i in range(20):  # 20 scan rounds
+for i in range(20):
     port = random.choice(PORTS)
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

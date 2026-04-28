@@ -1,4 +1,4 @@
-# bruteforce.py — Simulates brute force login attempts against the honeypot
+# Simulate brute force login attempts
 # USE ONLY ON YOUR OWN SYSTEM / AUTHORISED TARGETS
 #
 # Usage:
@@ -26,7 +26,7 @@ for user, passwd in CREDENTIALS:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(3)
         s.connect((TARGET_HOST, PORT))
-        s.recv(256)  # Read banner
+        s.recv(256)
         payload = f"USER {user}\r\nPASS {passwd}\r\n"
         s.send(payload.encode())
         print(f"[BRUTE] Tried {user}:{passwd}")
