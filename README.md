@@ -4,8 +4,8 @@
 **Enterprise-Grade Deception & Threat Intelligence Platform for ICS/SCADA Environments**
 
 [![Status](https://img.shields.io/badge/Status-UNDER%20DEVELOPMENT-FF8C00?style=for-the-badge&logo=github)](.)
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![Flask](https://img.shields.io/badge/Flask-3.0-000000?style=for-the-badge&logo=flask)](https://flask.palletsprojects.com)
+[![Python](https://img.shields.io/badge/Python-3.12+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![Flask](https://img.shields.io/badge/Flask-3.1.3-000000?style=for-the-badge&logo=flask)](https://flask.palletsprojects.com)
 [![Scikit-Learn](https://img.shields.io/badge/ML-Scikit--Learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)](https://scikit-learn.org)
 [![License](https://img.shields.io/badge/License-MIT-2EA043?style=for-the-badge)](LICENSE)
 
@@ -83,7 +83,7 @@ python ml/train_model.py
 FLASK_ENV=development python run.py
 ```
 
-Access the dashboard at: **http://localhost:5000** (Default Auth: `admin` / Password set via `AEGISGRID_PASSWORD` env variable, or bypasses if not set).
+Access the dashboard at: **http://localhost:5000** (Default Auth: `admin` / Password set via `AEGISGRID_PASSWORD` env variable). **Note:** App will refuse to start if this variable is not set.
 
 ---
 
@@ -110,7 +110,7 @@ export FLASK_ENV=production
 gunicorn -w 4 -b 0.0.0.0:5000 dashboard.app:app
 ```
 
-*Note: Ensure your AWS Security Group allows incoming TCP traffic on ports 5000 (Dashboard) and your honeypot ports (8888, 8080, 2222).*
+*Note: Ensure your AWS Security Group allows incoming TCP traffic on ports 5000 (Dashboard — restricted to your IP only) and your honeypot ports (8888, 8080, 2222).*
 
 ---
 
@@ -119,6 +119,7 @@ gunicorn -w 4 -b 0.0.0.0:5000 dashboard.app:app
 The platform has undergone rigorous security hardening prior to release:
 - **Zero XSS Risk:** `innerHTML` is entirely removed; the DOM is built using safe `textContent`.
 - **API Protection:** `Flask-Limiter` actively rate-limits all endpoints.
+- **Mandatory Auth:** Hard fail-safe ensures the dashboard never boots without a configured `AEGISGRID_PASSWORD`.
 - **Secure Headers:** Strict CSP, HSTS, and X-Frame-Options are enforced.
 - **High Availability:** SQLite operates in `WAL` mode to prevent database locking during mass concurrent attacks.
 
