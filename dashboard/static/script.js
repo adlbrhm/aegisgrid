@@ -133,7 +133,12 @@ function buildHeatmap(timeline) {
   const el = document.getElementById('heatmap');
   if (!el) return;
   const byHour = {};
-  (timeline || []).forEach(([h, c]) => { byHour[parseInt(h)] = c; });
+  const d = new Date();
+  (timeline || []).forEach(([h, c]) => { 
+    d.setUTCHours(parseInt(h, 10), 0, 0, 0);
+    const localH = d.getHours();
+    byHour[localH] = (byHour[localH] || 0) + c; 
+  });
   const maxVal = Math.max(1, ...Object.values(byHour));
   el.innerHTML = '';
   for (let h = 0; h < 24; h++) {
@@ -181,9 +186,8 @@ function initMap() {
   canvas.width  = W;
   canvas.height = H;
 
-  const projection = d3.geoNaturalEarth1()
-    .scale(W / 6.0)
-    .translate([W / 2, H / 2]);
+  const projection = d3.geoEquirectangular()
+    .fitSize([W, H], {type: "Sphere"});
   _mapProjection = projection;
 
   const ctx  = canvas.getContext('2d');
@@ -571,6 +575,9 @@ async function exportLogs() {
     console.error('[AegisGrid] Export error:', e);
   }
 }
+
+document.getElementById('btn-refresh')?.addEventListener('click', applyFilter);
+document.getElementById('btn-export')?.addEventListener('click', exportLogs);
 
 fetchData();
 setInterval(fetchData, 5000);
