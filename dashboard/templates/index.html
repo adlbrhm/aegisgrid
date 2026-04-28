@@ -7,6 +7,8 @@
     <title>AegisGrid | Energy Sector Threat Intelligence</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
@@ -69,58 +71,29 @@
             <div class="panel">
                 <div class="panel-header">
                     <span class="panel-title">GLOBAL ATTACK ORIGINS</span>
-                    <span class="panel-badge" id="map-count">0 geolocated</span>
+                    <span class="panel-badge" id="map-count"><span class="map-pulse-dot"></span><span id="map-count-text">0 geolocated</span></span>
                 </div>
                 <div id="map-container">
-                    <!-- Simplified SVG world map paths -->
-                    <svg id="world-map" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="800" height="400" fill="#141417" />
-                        <!-- Simplified continent outlines as filled paths -->
-                        <!-- North America -->
-                        <path d="M80,60 L180,55 L200,80 L195,130 L170,160 L140,175 L110,170 L90,150 L70,120 Z"
-                            fill="#1c1c21" stroke="#27272f" stroke-width="0.8" />
-                        <!-- Central America -->
-                        <path d="M140,175 L170,160 L175,195 L155,210 L135,200 Z" fill="#1c1c21" stroke="#27272f"
-                            stroke-width="0.8" />
-                        <!-- South America -->
-                        <path d="M145,220 L195,215 L215,250 L220,310 L200,360 L170,365 L145,335 L130,280 L125,245 Z"
-                            fill="#1c1c21" stroke="#27272f" stroke-width="0.8" />
-                        <!-- Europe -->
-                        <path d="M340,45 L400,40 L415,60 L410,90 L385,100 L360,95 L340,80 Z" fill="#1c1c21"
-                            stroke="#27272f" stroke-width="0.8" />
-                        <!-- Africa -->
-                        <path
-                            d="M350,105 L420,100 L440,130 L445,200 L430,260 L400,285 L370,275 L345,240 L335,180 L340,130 Z"
-                            fill="#1c1c21" stroke="#27272f" stroke-width="0.8" />
-                        <!-- Asia -->
-                        <path d="M430,35 L620,30 L650,60 L645,100 L600,120 L540,130 L490,120 L440,110 L425,80 Z"
-                            fill="#1c1c21" stroke="#27272f" stroke-width="0.8" />
-                        <!-- South/SE Asia -->
-                        <path d="M500,125 L570,120 L590,150 L570,175 L530,180 L505,165 L495,145 Z" fill="#1c1c21"
-                            stroke="#27272f" stroke-width="0.8" />
-                        <!-- Oceania -->
-                        <path d="M600,230 L680,220 L700,255 L680,285 L635,280 L610,260 Z" fill="#1c1c21"
-                            stroke="#27272f" stroke-width="0.8" />
-                        <!-- Russia -->
-                        <path d="M430,35 L620,30 L650,25 L700,30 L700,60 L650,60 L620,30 Z" fill="#1c1c21"
-                            stroke="#27272f" stroke-width="0.8" />
-                        <!-- UK/Ireland -->
-                        <path d="M330,50 L345,48 L348,65 L335,68 L328,58 Z" fill="#1c1c21" stroke="#27272f"
-                            stroke-width="0.8" />
-
-                        <!-- Grid lines -->
-                        <line x1="0" y1="200" x2="800" y2="200" stroke="#27272f" stroke-width="0.5"
-                            stroke-dasharray="3,6" />
-                        <line x1="400" y1="0" x2="400" y2="400" stroke="#27272f" stroke-width="0.5"
-                            stroke-dasharray="3,6" />
-                        <line x1="0" y1="100" x2="800" y2="100" stroke="#1c1c21" stroke-width="0.3" />
-                        <line x1="0" y1="300" x2="800" y2="300" stroke="#1c1c21" stroke-width="0.3" />
-                        <line x1="200" y1="0" x2="200" y2="400" stroke="#1c1c21" stroke-width="0.3" />
-                        <line x1="600" y1="0" x2="600" y2="400" stroke="#1c1c21" stroke-width="0.3" />
-
-                        <!-- Attack dots will be injected here by JS -->
+                    <!-- Base: D3 Natural Earth canvas -->
+                    <canvas id="map-canvas"></canvas>
+                    <!-- Overlay: SVG for animated arcs + dots -->
+                    <svg id="map-svg" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <radialGradient id="dot-glow" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%"  stop-color="#e11d48" stop-opacity="1"/>
+                                <stop offset="60%" stop-color="#e11d48" stop-opacity="0.4"/>
+                                <stop offset="100%" stop-color="#e11d48" stop-opacity="0"/>
+                            </radialGradient>
+                            <filter id="glow-filter" x="-50%" y="-50%" width="200%" height="200%">
+                                <feGaussianBlur stdDeviation="2.5" result="blur"/>
+                                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                            </filter>
+                        </defs>
+                        <g id="arc-layer"></g>
                         <g id="attack-dots"></g>
                     </svg>
+                    <!-- Tooltip -->
+                    <div id="map-tooltip"></div>
                 </div>
             </div>
 

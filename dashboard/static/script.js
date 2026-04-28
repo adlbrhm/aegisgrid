@@ -118,31 +118,191 @@ function threatBadge(level) {
 
 // ── Map ─────────────────────────────────────────────────────
 
-function updateMap(points) {
-  const dotsEl = document.getElementById('attack-dots');
-  if (!dotsEl) return;
-  dotsEl.innerHTML = '';
-  let shown = 0;
-  points.forEach(p => {
-    // Skip only true null-island (0,0) — valid equator/meridian coords are allowed
-    if (p.lat === 0 && p.lon === 0) return;
-    // Equirectangular projection onto 800×400 SVG viewBox
-    const x = ((p.lon + 180) / 360) * 800;
-    const y = ((90  - p.lat) / 180) * 400;
-    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    circle.setAttribute('cx', x.toFixed(1));
-    circle.setAttribute('cy', y.toFixed(1));
-    circle.setAttribute('r', '4');
-    circle.setAttribute('fill', '#e11d48');
-    circle.setAttribute('opacity', '0.8');
-    const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-    title.textContent = `${p.ip} — ${p.country}`;
-    circle.appendChild(title);
-    dotsEl.appendChild(circle);
-    shown++;
+// Natural Earth projection initialised once; reused on every update
+let _mapProjection = null;
+let _mapInited     = false;
+let _prevPointKeys = new Set();
+
+// Server reference point (London) for arc target — adjust to your EC2 region if desired
+const SERVER_COORD = [0, 51.5];
+
+function initMap() {
+  const canvas  = document.getElementById('map-canvas');
+  const svg     = document.getElementById('map-svg');
+  const tooltip = document.getElementById('map-tooltip');
+  if (!canvas || !svg || typeof d3 === 'undefined') return false;
+
+  const W = canvas.offsetWidth  || 800;
+  const H = canvas.offsetHeight || 320;
+  canvas.width  = W;
+  canvas.height = H;
+
+  const projection = d3.geoNaturalEarth1()
+    .scale(W / 6.0)
+    .translate([W / 2, H / 2]);
+  _mapProjection = projection;
+
+  const ctx  = canvas.getContext('2d');
+  const path = d3.geoPath(projection, ctx);
+
+  // Atmospheric glow (edge gradient)
+  const grd = ctx.createRadialGradient(W/2, H/2, H*0.1, W/2, H/2, H*0.75);
+  grd.addColorStop(0, 'rgba(14,17,30,0)');
+  grd.addColorStop(1, 'rgba(7,9,13,0.85)');
+
+  // Fetch world topojson from CDN (lightweight 110m)
+  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+    .then(r => r.json())
+    .then(world => {
+      const land = topojson.feature(world, world.objects.land);
+
+      ctx.clearRect(0, 0, W, H);
+
+      // Ocean
+      ctx.fillStyle = '#07090d';
+      ctx.fillRect(0, 0, W, H);
+
+      // Graticule grid
+      const graticule = d3.geoGraticule()();
+      ctx.beginPath();
+      path(graticule);
+      ctx.strokeStyle = 'rgba(39,39,47,0.35)';
+      ctx.lineWidth = 0.4;
+      ctx.stroke();
+
+      // Land fill — gradient from deep to slightly lighter
+      const landGrd = ctx.createLinearGradient(0, 0, 0, H);
+      landGrd.addColorStop(0, '#1a1d28');
+      landGrd.addColorStop(1, '#111420');
+      ctx.beginPath();
+      path(land);
+      ctx.fillStyle = landGrd;
+      ctx.fill();
+
+      // Land border
+      ctx.beginPath();
+      path(land);
+      ctx.strokeStyle = 'rgba(63,63,74,0.6)';
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+
+      // Vignette
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, W, H);
+
+      _mapInited = true;
+    })
+    .catch(() => {
+      // topojson unavailable — draw minimal fallback background
+      ctx.fillStyle = '#07090d';
+      ctx.fillRect(0, 0, W, H);
+      _mapInited = true;
+    });
+
+  // Add arc gradient def to SVG
+  const defs = svg.querySelector('defs');
+  const arcGrad = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+  arcGrad.setAttribute('id', 'arc-gradient');
+  arcGrad.setAttribute('gradientUnits', 'userSpaceOnUse');
+  arcGrad.innerHTML = `
+    <stop offset="0%"   stop-color="#e11d48" stop-opacity="0.7"/>
+    <stop offset="100%" stop-color="#e11d48" stop-opacity="0"/>`;
+  defs.appendChild(arcGrad);
+
+  // Sync SVG viewBox to canvas pixel size
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  // Move tooltip on mousemove over the SVG dots layer
+  svg.parentElement.addEventListener('mousemove', e => {
+    const rect = svg.getBoundingClientRect();
+    tooltip.style.left = (e.clientX - rect.left + 14) + 'px';
+    tooltip.style.top  = (e.clientY - rect.top  - 10) + 'px';
   });
-  setText('map-count', shown + ' geolocated');
+
+  return true;
 }
+
+function drawArc(x1, y1, x2, y2) {
+  const arcLayer = document.getElementById('arc-layer');
+  if (!arcLayer) return;
+  // Cubic bezier control point arcs upward between source and target
+  const mx = (x1 + x2) / 2;
+  const my = Math.min(y1, y2) - Math.abs(x2 - x1) * 0.25;
+  const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  pathEl.setAttribute('d', `M${x1},${y1} Q${mx},${my} ${x2},${y2}`);
+  pathEl.className = 'map-arc';
+  arcLayer.appendChild(pathEl);
+  // Auto-remove after animation completes
+  setTimeout(() => pathEl.remove(), 2000);
+}
+
+function updateMap(points) {
+  if (!_mapInited) { if (!initMap()) return; }
+
+  const dotsEl  = document.getElementById('attack-dots');
+  const tooltip = document.getElementById('map-tooltip');
+  if (!dotsEl || !_mapProjection) return;
+
+  // Cap at 200 for performance
+  const visible = points.filter(p => !(p.lat === 0 && p.lon === 0)).slice(0, 200);
+
+  // Determine which points are new since last render
+  const newKeys = new Set(visible.map(p => `${p.lat},${p.lon}`));
+  const added   = visible.filter(p => !_prevPointKeys.has(`${p.lat},${p.lon}`));
+  _prevPointKeys = newKeys;
+
+  // Server screen coord for arc targets
+  const [sx, sy] = _mapProjection(SERVER_COORD) || [0, 0];
+
+  // Fade-in new arcs
+  added.forEach(p => {
+    const proj = _mapProjection([p.lon, p.lat]);
+    if (!proj) return;
+    drawArc(proj[0], proj[1], sx, sy);
+  });
+
+  // Rebuild dot layer
+  dotsEl.innerHTML = '';
+  visible.forEach(p => {
+    const proj = _mapProjection([p.lon, p.lat]);
+    if (!proj) return;
+    const [cx, cy] = proj;
+
+    // Pulse ring
+    const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    ring.setAttribute('cx', cx.toFixed(1));
+    ring.setAttribute('cy', cy.toFixed(1));
+    ring.setAttribute('r', '4');
+    ring.setAttribute('class', 'map-ring');
+    ring.style.animationDelay = `${Math.random() * 2}s`;
+
+    // Core dot
+    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    dot.setAttribute('cx', cx.toFixed(1));
+    dot.setAttribute('cy', cy.toFixed(1));
+    dot.setAttribute('r', '3.5');
+    dot.setAttribute('class', 'map-dot');
+
+    dotsEl.appendChild(ring);
+    dotsEl.appendChild(dot);
+
+    // Fade-in
+    requestAnimationFrame(() => dot.classList.add('visible'));
+
+    // Hover tooltip
+    dot.addEventListener('mouseenter', () => {
+      tooltip.innerHTML = `
+        <div class="tt-ip">${escapeHTML(p.ip)}</div>
+        <div><span class="tt-label">Country  </span>${escapeHTML(p.country)}</div>
+        <div><span class="tt-label">Type     </span>${escapeHTML(p.attack_type)}</div>`;
+      tooltip.classList.add('visible');
+    });
+    dot.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
+  });
+
+  setText('map-count-text', visible.length + ' geolocated');
+}
+
 
 // ── Terminal ─────────────────────────────────────────────────
 

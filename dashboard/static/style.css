@@ -383,3 +383,102 @@ header {
   header { padding: 0 16px; }
   .main { padding: 14px 16px; }
 }
+
+/* ── MAP ─────────────────────────────────────────────────── */
+#map-container {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  background: #07090d;
+  overflow: hidden;
+  border-radius: 0 0 var(--r) var(--r);
+}
+
+/* Canvas (D3 base layer) and SVG overlay sit exactly on top of each other */
+#map-canvas,
+#map-svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+
+#map-svg { pointer-events: none; overflow: visible; }
+
+/* Attack dot (core) */
+.map-dot {
+  fill: #e11d48;
+  filter: url(#glow-filter);
+  opacity: 0;
+  transition: opacity .4s ease;
+  cursor: pointer;
+  pointer-events: all;
+}
+.map-dot.visible { opacity: 1; }
+
+/* Pulse ring expanding from dot */
+.map-ring {
+  fill: none;
+  stroke: #e11d48;
+  stroke-width: 1.2;
+  opacity: 0;
+  transform-origin: center;
+  animation: pulse-ring 2.4s ease-out infinite;
+}
+@keyframes pulse-ring {
+  0%   { r: 4px; opacity: .7; }
+  100% { r: 18px; opacity: 0; }
+}
+
+/* Bezier arc (attacker → server) */
+.map-arc {
+  fill: none;
+  stroke: url(#arc-gradient);
+  stroke-width: 1;
+  opacity: 0;
+  stroke-dasharray: 300;
+  stroke-dashoffset: 300;
+  animation: arc-draw 1.6s ease forwards;
+}
+@keyframes arc-draw {
+  0%   { stroke-dashoffset: 300; opacity: 0.6; }
+  70%  { stroke-dashoffset: 0;   opacity: 0.6; }
+  100% { stroke-dashoffset: 0;   opacity: 0; }
+}
+
+/* Tooltip */
+#map-tooltip {
+  position: absolute;
+  background: rgba(9,9,11,.92);
+  border: 1px solid #27272f;
+  border-left: 2px solid #e11d48;
+  border-radius: var(--r);
+  padding: 8px 12px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text2);
+  line-height: 1.7;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .15s ease;
+  white-space: nowrap;
+  z-index: 50;
+  backdrop-filter: blur(4px);
+}
+#map-tooltip.visible { opacity: 1; }
+#map-tooltip .tt-ip    { color: #e11d48; font-weight: 700; font-size: 11px; }
+#map-tooltip .tt-label { color: var(--muted); }
+
+/* Pulse badge dot on map-count */
+.map-pulse-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #e11d48;
+  margin-right: 5px;
+  vertical-align: middle;
+  animation: badge-pulse 1.8s ease-in-out infinite;
+}
+@keyframes badge-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(225,29,72,.5); }
+  50%       { opacity: .7; box-shadow: 0 0 0 4px rgba(225,29,72,0); }
+}
