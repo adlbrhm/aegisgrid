@@ -108,50 +108,59 @@ header {
   border-radius: var(--r);
 }
 
-/* ── TICKER ──────────────────────────────────────────────── */
-.ticker-wrap {
+/* ── TICKER / FEED BAR ───────────────────────────────────── */
+.feed-bar {
   background: var(--bg3);
   border-bottom: 1px solid var(--border);
-  overflow: hidden;
-  height: 28px;
+  height: 30px;
   display: flex;
-  align-items: center;
+  align-items: stretch;
+  flex-shrink: 0;
 }
-.ticker-label {
+.feed-badge {
   flex-shrink: 0;
   background: var(--red);
   color: #fff;
   font-family: var(--hud);
   font-size: 8px;
+  font-weight: 700;
   letter-spacing: 2.5px;
-  padding: 0 14px;
-  height: 100%;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  z-index: 2;
+}
+.ticker-viewport {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
   display: flex;
   align-items: center;
 }
-.ticker-inner {
+/* Fade edges inside viewport */
+.ticker-viewport::before,
+.ticker-viewport::after {
+  content: ''; position: absolute; top: 0; height: 100%; width: 32px; z-index: 1; pointer-events: none;
+}
+.ticker-viewport::before { left:  0; background: linear-gradient(to right, var(--bg3), transparent); }
+.ticker-viewport::after  { right: 0; background: linear-gradient(to left,  var(--bg3), transparent); }
+.ticker-track {
+  display: flex;
+  white-space: nowrap;
   font-family: var(--mono);
   font-size: 10px;
   color: var(--text2);
-  padding-left: 24px;
-  white-space: nowrap;
-  display: flex;
+  padding-left: 20px;
   will-change: transform;
   animation: ticker-scroll 60s linear infinite;
 }
+.ticker-track span { padding-right: 8px; }
 @keyframes ticker-scroll {
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
-/* Fade edges on ticker */
-.ticker-wrap::before,
-.ticker-wrap::after {
-  content: ''; position: absolute; top: 0; width: 40px; height: 100%;
-  z-index: 2; pointer-events: none;
-}
-.ticker-wrap::before { left: 72px; background: linear-gradient(to right, var(--bg3), transparent); }
-.ticker-wrap::after  { right: 0;   background: linear-gradient(to left,  var(--bg3), transparent); }
-.ticker-wrap { position: relative; }
+
 
 /* ── LAYOUT ──────────────────────────────────────────────── */
 .main { padding: 20px 24px; display: grid; gap: 14px; }
@@ -309,9 +318,28 @@ header {
 }
 .ctrl-input::placeholder { color: var(--border3); }
 .ctrl-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(225,29,72,.12); }
+.ctrl-select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.ctrl-select-wrap::after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0; height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--muted);
+  pointer-events: none;
+}
 .ctrl-select {
+  appearance: none;
+  -webkit-appearance: none;
   background: var(--bg); border: 1px solid var(--border2); color: var(--text);
-  font-family: var(--mono); font-size: 11px; padding: 6px 8px; height: 32px;
+  font-family: var(--mono); font-size: 11px; padding: 6px 30px 6px 8px; height: 32px;
   border-radius: var(--r); outline: none; cursor: pointer; transition: border-color .15s;
 }
 .ctrl-select:focus { border-color: var(--accent); }
@@ -346,10 +374,10 @@ header {
   font-size: 11px;
   line-height: 1.75;
   padding: 12px 16px;
-  height: 280px;
+  max-height: 280px;
+  min-height: 120px;
   overflow-y: auto;
   color: var(--text2);
-  /* Subtle dot-grid background when sparse */
   background-image: radial-gradient(circle, rgba(255,255,255,.02) 1px, transparent 1px);
   background-size: 20px 20px;
 }

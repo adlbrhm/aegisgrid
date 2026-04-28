@@ -28,11 +28,13 @@
         </div>
     </header>
 
-    <div class="ticker-wrap">
-        <div class="ticker-label">LIVE FEED</div>
-        <div class="ticker-inner" id="ticker-track">
-            <span id="ticker">Initialising threat feed...</span>
-            <span id="ticker-clone" aria-hidden="true"></span>
+    <div class="feed-bar">
+        <div class="feed-badge">LIVE FEED</div>
+        <div class="ticker-viewport">
+            <div class="ticker-track" id="ticker-track">
+                <span id="ticker">Initialising threat feed...</span>
+                <span id="ticker-clone" aria-hidden="true"></span>
+            </div>
         </div>
     </div>
 
@@ -189,15 +191,17 @@
             </div>
             <div class="controls">
                 <input class="ctrl-input" type="text" id="search-input" placeholder="Search IP, country, port, type...">
-                <select class="ctrl-select" id="type-filter">
-                    <option value="">All types</option>
-                    <option value="port_scan">Port scan</option>
-                    <option value="brute_force">Brute force</option>
-                    <option value="ics_probe">ICS probe</option>
-                    <option value="web_exploit">Web exploit</option>
-                    <option value="recon">Recon</option>
-                    <option value="unknown">Unknown</option>
-                </select>
+                <div class="ctrl-select-wrap">
+                    <select class="ctrl-select" id="type-filter">
+                        <option value="">All types</option>
+                        <option value="port_scan">Port scan</option>
+                        <option value="brute_force">Brute force</option>
+                        <option value="ics_probe">ICS probe</option>
+                        <option value="web_exploit">Web exploit</option>
+                        <option value="recon">Recon</option>
+                        <option value="unknown">Unknown</option>
+                    </select>
+                </div>
                 <button class="ctrl-btn" onclick="applyFilter()">REFRESH</button>
                 <button class="cbtn cbtn-red" onclick="exportLogs()">EXPORT CSV</button>
             </div>

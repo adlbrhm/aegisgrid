@@ -175,8 +175,9 @@ function initMap() {
   const tooltip = document.getElementById('map-tooltip');
   if (!canvas || !svg || typeof d3 === 'undefined') return false;
 
-  const W = canvas.offsetWidth  || 800;
-  const H = canvas.offsetHeight || 320;
+  const W = canvas.offsetWidth  || canvas.parentElement?.offsetWidth || 600;
+  const H = canvas.offsetHeight || canvas.parentElement?.offsetHeight || 320;
+  if (W < 10 || H < 10) return false; // layout not yet painted
   canvas.width  = W;
   canvas.height = H;
 
@@ -280,7 +281,18 @@ function drawArc(x1, y1, x2, y2) {
 }
 
 function updateMap(points) {
-  if (!_mapInited) { if (!initMap()) return; }
+  // If map not yet initialised, attempt init; retry via ResizeObserver if canvas still 0px
+  if (!_mapInited) {
+    const ok = initMap();
+    if (!ok) {
+      const canvas = document.getElementById('map-canvas');
+      if (canvas && !canvas._roAttached) {
+        canvas._roAttached = true;
+        new ResizeObserver(() => { if (!_mapInited) initMap(); }).observe(canvas);
+      }
+      return;
+    }
+  }
 
   const dotsEl  = document.getElementById('attack-dots');
   const tooltip = document.getElementById('map-tooltip');
@@ -541,7 +553,24 @@ async function fetchData() {
 }
 
 function applyFilter() { currentDataHash = ''; fetchData(); }
-function exportLogs()  { window.location.href = '/api/export'; }
+
+async function exportLogs() {
+  try {
+    const res = await authFetch('/api/export');
+    if (!res.ok) { alert('Export failed — session may have expired.'); return; }
+    const blob = await res.blob();
+    const date = new Date().toISOString().slice(0, 10);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `aegisgrid_logs_${date}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+  } catch (e) {
+    console.error('[AegisGrid] Export error:', e);
+  }
+}
 
 fetchData();
 setInterval(fetchData, 5000);
