@@ -1,5 +1,6 @@
 # logger.py — SQLite telemetry persistence
 import os
+import sqlite3
 from datetime import datetime
 
 # Base paths

@@ -61,7 +61,7 @@ The system is decoupled into two primary domains executing concurrently:
 
 ## 🚀 Quick Start & Installation
 
-**Prerequisites:** Python 3.10+ and Git.
+**Prerequisites:** Python 3.12+ and Git.
 
 ```bash
 # 1. Clone the repository
@@ -89,19 +89,22 @@ Access the dashboard at: **http://localhost:5000** (Default Auth: `admin` / Pass
 
 ## 🛡️ Production Deployment (AWS EC2 Free Tier)
 
-AegisGrid is engineered for minimal overhead, making it perfectly suited for an **AWS EC2 Free Tier** Ubuntu 22.04 instance.
+AegisGrid is engineered for minimal overhead, making it perfectly suited for an **AWS EC2 Free Tier** Ubuntu 22.04+ instance.
 
 **Important:** We use **Gunicorn directly** (No Nginx required) to expose the application, keeping the architecture simple and resource-friendly.
 
 ```bash
-# 1. Install WSGI Server
-pip install gunicorn
+# 1. Install Dependencies (Python 3.12 compatible)
+pip install -r requirements.txt
 
-# 2. Export strict production credentials
+# 2. Train the ML Model (Required on first run)
+python3 ml/train_model.py
+
+# 3. Export strict production credentials
 export AEGISGRID_PASSWORD="SuperSecretPassword"
 export FLASK_ENV=production
 
-# 3. Launch AegisGrid
+# 4. Launch AegisGrid
 # -w 4 : Runs 4 concurrent workers handling heavy traffic
 # -b 0.0.0.0:5000 : Binds directly to all public interfaces on port 5000
 gunicorn -w 4 -b 0.0.0.0:5000 dashboard.app:app
