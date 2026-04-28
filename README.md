@@ -13,15 +13,15 @@
 
 ---
 
-> [!WARNING]  
-> **🚧 UNDER ACTIVE DEVELOPMENT**  
-> The core honeypot engine, ML classification pipeline, and SOC dashboard are fully operational. We are currently finalizing lab testing, deployment hardening, and academic documentation. This repository serves as a showcase of the project's current state.
+> [!WARNING]
+> **🚧 UNDER ACTIVE DEVELOPMENT**
+> The core honeypot engine, ML classification pipeline, and SOC dashboard are fully operational. We are currently finalising lab testing, deployment hardening, and academic documentation. This repository serves as a showcase of the project's current state.
 
 ---
 
 ## 🎯 Why AegisGrid?
 
-Critical infrastructure—specifically the energy sector—is a prime target for advanced persistent threats (APTs). Operating Technology (OT) and Industrial Control Systems (ICS) cannot undergo routine patching without severe downtime risks. 
+Critical infrastructure—specifically the energy sector—is a prime target for advanced persistent threats (APTs). Operating Technology (OT) and Industrial Control Systems (ICS) cannot undergo routine patching without severe downtime risks.
 
 **AegisGrid** introduces a **low-interaction cyber deception platform** that emulates vulnerable energy infrastructure. By safely capturing, classifying, and mapping malicious traffic in real-time, defenders gain proactive threat intelligence without exposing true production assets.
 
@@ -31,7 +31,7 @@ Critical infrastructure—specifically the energy sector—is a prime target for
 
 | Capability | Description |
 | :--- | :--- |
-| 🔌 **Multi-Protocol Emulation** | Concurrent honeypots for Modbus/TCP (502), SCADA (8888), HTTP (8080), FTP (21), and SSH (22). |
+| 🔌 **Multi-Protocol Emulation** | Concurrent honeypots on SCADA (8888), HTTP (8080), and Fake SSH (2222). |
 | 🧠 **Two-Stage Classifier** | Deterministic attack identification via Regex, backed by a Random Forest ML model for anomaly detection. |
 | 🌍 **Live IP Geolocation** | Automated resolution of attacker origin (Country, City, ISP, Coordinates) via `ip-api.com`. |
 | 📊 **Real-Time SOC Dashboard** | High-performance, dark-theme web interface featuring Chart.js analytics and an animated SVG world map. |
@@ -78,12 +78,30 @@ pip install -r requirements.txt
 
 # 4. Train the ML Model (Required on first run)
 python ml/train_model.py
-
-# 5. Launch SOC Platform (Dev Mode)
-FLASK_ENV=development python run.py
 ```
 
-Access the dashboard at: **http://localhost:5000** (Default Auth: `admin` / Password set via `AEGISGRID_PASSWORD` env variable). **Note:** App will refuse to start if this variable is not set.
+---
+
+## 💻 Windows Local Demo
+
+> [!NOTE]
+> Run everything from the project root directory. No Gunicorn needed for local development.
+
+```cmd
+:: 1. Set password
+set AEGISGRID_PASSWORD=demo123
+
+:: 2. Launch the full system (honeypot engine + dashboard)
+python run.py
+```
+
+Dashboard: **http://127.0.0.1:5000** (login: `admin` / `demo123`)
+
+```cmd
+:: 3. In a second terminal — run demo attack scripts
+python demo\scanner.py 127.0.0.1
+python demo\bruteforce.py 127.0.0.1
+```
 
 ---
 
@@ -91,7 +109,10 @@ Access the dashboard at: **http://localhost:5000** (Default Auth: `admin` / Pass
 
 AegisGrid is engineered for minimal overhead, making it perfectly suited for an **AWS EC2 Free Tier** Ubuntu 22.04+ instance.
 
-**Important:** We use **Gunicorn directly** (No Nginx required) to expose the application, keeping the architecture simple and resource-friendly.
+> [!IMPORTANT]
+> **Run mode clarification:**
+> - `python3 run.py` starts the **full system** (honeypot engine + dashboard on port 5000). Use this for everything.
+> - `gunicorn ... dashboard.app:app` starts the **dashboard only** (no honeypot engine). Do **not** run Gunicorn while `run.py` is already running — they will conflict on port 5000.
 
 ```bash
 # 1. Install Dependencies (Python 3.12 compatible)
@@ -100,17 +121,49 @@ pip install -r requirements.txt
 # 2. Train the ML Model (Required on first run)
 python3 ml/train_model.py
 
-# 3. Export strict production credentials
-export AEGISGRID_PASSWORD="SuperSecretPassword"
+# 3. Set production credentials (mandatory — app refuses to start without this)
+export AEGISGRID_PASSWORD="your-secure-password"
 export FLASK_ENV=production
 
-# 4. Launch AegisGrid
-# -w 4 : Runs 4 concurrent workers handling heavy traffic
-# -b 0.0.0.0:5000 : Binds directly to all public interfaces on port 5000
-gunicorn -w 4 -b 0.0.0.0:5000 dashboard.app:app
+# 4. Launch full system
+python3 run.py
 ```
 
-*Note: Ensure your AWS Security Group allows incoming TCP traffic on ports 5000 (Dashboard — restricted to your IP only) and your honeypot ports (8888, 8080, 2222).*
+Dashboard: **http://EC2_PUBLIC_IP:5000** (login: `admin` / your password)
+
+**AWS Security Group inbound rules:**
+
+| Port | Source | Purpose |
+| :--- | :--- | :--- |
+| 22 | My IP only | SSH admin access |
+| 5000 | My IP only | SOC Dashboard |
+| 8888 | 0.0.0.0/0 | SCADA Honeypot |
+| 8080 | 0.0.0.0/0 | HTTP Honeypot |
+| 2222 | 0.0.0.0/0 | Fake SSH Honeypot |
+
+> [!NOTE]
+> Local users can always access the dashboard via `http://127.0.0.1:5000` even when the app is bound to `0.0.0.0`.
+
+---
+
+## 🎭 Demo Attack Scripts
+
+> [!WARNING]
+> **⚠️ Never scan real port 22.** AegisGrid uses port **2222** for the fake SSH honeypot. The demo scripts are pre-configured to target only the three safe honeypot ports: `8888`, `8080`, `2222`.
+
+Validate the dashboard by simulating attacks locally or against your EC2 instance:
+
+```bash
+# Windows (local)
+python demo\scanner.py 127.0.0.1
+python demo\bruteforce.py 127.0.0.1
+
+# Ubuntu EC2 (remote — substitute your EC2 public IP)
+python3 demo/scanner.py <EC2_PUBLIC_IP>
+python3 demo/bruteforce.py <EC2_PUBLIC_IP>
+```
+
+Both scripts accept a target IP as an optional CLI argument and default to `127.0.0.1`.
 
 ---
 
@@ -120,6 +173,7 @@ The platform has undergone rigorous security hardening prior to release:
 - **Zero XSS Risk:** `innerHTML` is entirely removed; the DOM is built using safe `textContent`.
 - **API Protection:** `Flask-Limiter` actively rate-limits all endpoints.
 - **Mandatory Auth:** Hard fail-safe ensures the dashboard never boots without a configured `AEGISGRID_PASSWORD`.
+- **Timing-Safe Auth:** Credentials verified via `hmac.compare_digest` to prevent timing oracle attacks.
 - **Secure Headers:** Strict CSP, HSTS, and X-Frame-Options are enforced.
 - **High Availability:** SQLite operates in `WAL` mode to prevent database locking during mass concurrent attacks.
 
@@ -135,21 +189,7 @@ aegisgrid/
 ├── honeypot/           # Core Socket Listeners & Database Logic
 ├── ml/                 # Random Forest Classification Model
 ├── requirements.txt    # Python Dependencies
-└── run.py              # Development execution script
-```
-
----
-
-## 🎭 Demo Tools
-
-Validate the dashboard visually by simulating attacks locally:
-
-```bash
-# Run a simulated fast port-scan against all listening services
-python demo/scanner.py
-
-# Execute a simulated brute-force attack against the SSH module
-python demo/bruteforce.py
+└── run.py              # System entrypoint (honeypot + dashboard)
 ```
 
 ---
@@ -166,7 +206,7 @@ Full architectural and structural specifications are located in the `docs/` dire
 
 ## ⚠️ Disclaimer
 
-This tool is strictly designed for academic research and authorized laboratory environments. **Do not** deploy listening honeypots on public or enterprise networks without explicit administrative authorization and proper network isolation. 
+This tool is strictly designed for academic research and authorized laboratory environments. **Do not** deploy listening honeypots on public or enterprise networks without explicit administrative authorization and proper network isolation.
 
 ---
 

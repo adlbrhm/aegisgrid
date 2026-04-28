@@ -14,11 +14,10 @@
 
     <header>
         <div class="header-left">
-            <img src="{{ url_for('static', filename='img/aegisgrid.png') }}" alt="AegisGrid"
-                style="height:30px; margin-right:12px; filter:brightness(0) invert(1)">
+            <div class="logo-dot"></div>
             <div class="logo-wordmark">
                 <div class="header-title">AEGISGRID</div>
-                <div class="header-sub">AEGISGRID THREAT INTELLIGENCE PLATFORM</div>
+                <div class="header-sub">THREAT INTELLIGENCE PLATFORM</div>
             </div>
         </div>
         <div class="header-right">
@@ -55,8 +54,8 @@
             </div>
             <div class="stat-card" style="--c:var(--amber)">
                 <div class="stat-label">Active Ports</div>
-                <div class="stat-value">5</div>
-                <div class="stat-delta">8888 · 502 · 8080 · 21 · 22</div>
+                <div class="stat-value">3</div>
+                <div class="stat-delta">8888 · 8080 · 2222</div>
             </div>
             <div class="stat-card" style="--c:var(--green)">
                 <div class="stat-label">Threat Level</div>
@@ -133,14 +132,10 @@
                 </div>
                 <div class="panel-body" style="padding:0">
                     <div class="terminal" id="terminal">
-                        <div class="t-line"><span class="t-time">[SYSTEM]</span> <span class="t-type">Honeypot engine
-                                initialised</span></div>
-                        <div class="t-line"><span class="t-time">[SYSTEM]</span> <span class="t-type">Listening on ports
-                                8888 502 8080 21 22</span></div>
-                        <div class="t-line"><span class="t-time">[SYSTEM]</span> <span class="t-type">ML classifier
-                                loaded</span></div>
-                        <div class="t-line"><span class="t-time">[SYSTEM]</span> <span class="t-type">Dashboard
-                                connected to database</span></div>
+                        <div class="t-line"><span class="t-time">[SYSTEM]</span> <span class="t-type">Honeypot engine initialised</span></div>
+                        <div class="t-line"><span class="t-time">[SYSTEM]</span> <span class="t-type">Listening on ports 8888 · 8080 · 2222</span></div>
+                        <div class="t-line"><span class="t-time">[SYSTEM]</span> <span class="t-type">ML classifier loaded</span></div>
+                        <div class="t-line"><span class="t-time">[SYSTEM]</span> <span class="t-type">Dashboard connected to database</span></div>
                         <div class="t-line"><span style="color:var(--muted)">Waiting for connections</span> <span
                                 class="t-cursor"></span></div>
                     </div>

@@ -307,6 +307,48 @@ header {
 .ctrl-btn:hover  { background: rgba(225,29,72,.15); border-color: var(--accent); }
 .ctrl-btn:active { transform: scale(.96); }
 
+.cbtn {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px;
+  padding: 5px 14px; border-radius: var(--r); cursor: pointer;
+  border: 1px solid; transition: background .15s, border-color .15s, transform .1s, box-shadow .15s;
+}
+.cbtn:active { transform: scale(.96); }
+.cbtn-red {
+  background: rgba(244,63,94,.08); border-color: rgba(244,63,94,.4); color: #f43f5e;
+}
+.cbtn-red:hover {
+  background: rgba(244,63,94,.18); border-color: #f43f5e;
+  box-shadow: 0 0 8px rgba(244,63,94,.2);
+}
+.cbtn-red:focus { outline: 2px solid rgba(244,63,94,.5); outline-offset: 2px; }
+
+/* ── TERMINAL ────────────────────────────────────────────── */
+.terminal {
+  background: var(--bg);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.8;
+  padding: 14px 16px;
+  min-height: 220px;
+  max-height: 320px;
+  overflow-y: auto;
+  color: var(--text2);
+}
+.terminal::-webkit-scrollbar       { width: 3px; }
+.terminal::-webkit-scrollbar-track { background: var(--bg); }
+.terminal::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.t-line { display: flex; gap: 8px; align-items: baseline; padding: 1px 0; }
+.t-time { color: var(--muted); font-size: 10px; white-space: nowrap; flex-shrink: 0; }
+.t-type { color: var(--text2); word-break: break-all; }
+.t-ip   { color: var(--accent); font-weight: 600; }
+.t-cursor {
+  display: inline-block; width: 7px; height: 13px;
+  background: var(--accent); opacity: .85;
+  animation: blink .9s step-end infinite; vertical-align: middle;
+}
+@keyframes blink { 0%,100%{opacity:.85} 50%{opacity:0} }
+
 /* ── TOP LIST ────────────────────────────────────────────── */
 .top-list { list-style: none; }
 .top-list li {

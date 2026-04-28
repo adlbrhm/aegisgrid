@@ -1,10 +1,16 @@
-# bruteforce.py — Simulates brute force login attempts
+# bruteforce.py — Simulates brute force login attempts against the honeypot
+# USE ONLY ON YOUR OWN SYSTEM / AUTHORISED TARGETS
+#
+# Usage:
+#   python demo/bruteforce.py              (defaults to 127.0.0.1)
+#   python demo/bruteforce.py 1.2.3.4     (target EC2 public IP)
 
 import socket
 import time
+import sys
 
-TARGET_HOST = '127.0.0.1'
-PORT = 8888
+TARGET_HOST = sys.argv[1] if len(sys.argv) > 1 else '127.0.0.1'
+PORT = 8888  # SCADA honeypot port
 
 CREDENTIALS = [
     ("admin", "admin"), ("admin", "password"), ("root", "root"),
@@ -29,4 +35,4 @@ for user, passwd in CREDENTIALS:
         print(f"[ERROR] {e}")
     time.sleep(0.4)
 
-print("\n[DEMO] Brute force simulation complete.")
+print("\n[DEMO] Brute force simulation complete. Check dashboard for logs.")
