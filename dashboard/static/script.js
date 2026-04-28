@@ -24,6 +24,17 @@ const escapeHTML = (str) => {
 // Authenticated fetch — re-uses browser-cached Basic Auth credentials
 const authFetch = (url) => fetch(url, { credentials: 'include' });
 
+// Convert backend UTC timestamp string ("YYYY-MM-DD HH:MM:SS") to local time
+function localTime(ts, fmt = 'time') {
+  if (!ts) return '--:--:--';
+  // Backend stores as local-ish naive string; parse as UTC explicitly
+  const d = new Date(ts.replace(' ', 'T') + 'Z');
+  if (isNaN(d)) return ts; // fallback: return raw string
+  if (fmt === 'time')     return d.toLocaleTimeString([], { hour12: false });
+  if (fmt === 'datetime') return d.toLocaleDateString('en-CA') + ' ' + d.toLocaleTimeString([], { hour12: false });
+  return ts;
+}
+
 // ── Charts ─────────────────────────────────────────────────
 
 const timelineChart = new Chart(
@@ -32,16 +43,23 @@ const timelineChart = new Chart(
     type: 'line',
     data: { labels: [], datasets: [{
       label: 'Attacks', data: [],
-      borderColor: '#e11d48', backgroundColor: 'rgba(225,29,72,0.1)',
-      borderWidth: 1.5, pointRadius: 3, pointBackgroundColor: '#e11d48',
-      tension: 0.3, fill: true
+      borderColor: '#e11d48',
+      backgroundColor: (ctx) => {
+        const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 180);
+        g.addColorStop(0, 'rgba(225,29,72,0.25)');
+        g.addColorStop(1, 'rgba(225,29,72,0)');
+        return g;
+      },
+      borderWidth: 2,
+      pointRadius: 2, pointBackgroundColor: '#e11d48', pointHoverRadius: 5,
+      tension: 0.4, fill: true
     }]},
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        x: { grid: { color: CHART_DEFAULTS.gridColor }, ticks: { maxTicksLimit: 8 } },
-        y: { grid: { color: CHART_DEFAULTS.gridColor }, beginAtZero: true }
+        x: { grid: { color: CHART_DEFAULTS.gridColor }, ticks: { maxTicksLimit: 8, color: '#64748b' } },
+        y: { grid: { color: CHART_DEFAULTS.gridColor }, beginAtZero: true, ticks: { color: '#64748b' } }
       }
     }
   }
@@ -109,6 +127,31 @@ function buildTopList(containerId, items, maxVal) {
       <span class="top-count">${item[1]}</span>
     </li>
   `).join('');
+}
+
+function buildHeatmap(timeline) {
+  const el = document.getElementById('heatmap');
+  if (!el) return;
+  const byHour = {};
+  (timeline || []).forEach(([h, c]) => { byHour[parseInt(h)] = c; });
+  const maxVal = Math.max(1, ...Object.values(byHour));
+  el.innerHTML = '';
+  for (let h = 0; h < 24; h++) {
+    const cnt = byHour[h] || 0;
+    const intensity = cnt > 0 ? 0.08 + (cnt / maxVal) * 0.72 : 0;
+    const cell = document.createElement('div');
+    cell.className = 'heat-cell';
+    cell.dataset.count = cnt;
+    cell.style.background = cnt > 0
+      ? `rgba(225,29,72,${intensity.toFixed(2)})`
+      : '';
+    cell.title = `${String(h).padStart(2,'0')}:00 — ${cnt} event${cnt !== 1 ? 's' : ''}`;
+    const tip = document.createElement('span');
+    tip.className = 'heat-cell-tip';
+    tip.textContent = String(h).padStart(2, '0');
+    cell.appendChild(tip);
+    el.appendChild(cell);
+  }
 }
 
 function threatBadge(level) {
@@ -323,7 +366,7 @@ function terminalLog(attack) {
 
   const ts = document.createElement('span');
   ts.className = 't-time';
-  ts.textContent = attack.timestamp ? attack.timestamp.slice(11, 19) : '--:--:--';
+  ts.textContent = localTime(attack.timestamp, 'time');
 
   const body = document.createElement('span');
   body.className = 't-type';
@@ -379,6 +422,9 @@ async function fetchData() {
     const threatEl = document.getElementById('stat-threat');
     if (threatEl) { threatEl.textContent = lvl; threatEl.style.color = col; }
     setText('stat-threat-sub', (stats.total || 0) + ' total events');
+
+    // Heatmap
+    buildHeatmap(stats.timeline);
 
     // Timeline chart
     if (stats.timeline && stats.timeline.length > 0) {
@@ -442,8 +488,8 @@ async function fetchData() {
         attacks.forEach(a => {
           const tr = document.createElement('tr');
           const cells = [
-            { val: a.id,                             style: 'color:var(--muted)' },
-            { val: a.timestamp,                      style: 'color:var(--muted)' },
+            { val: a.id,                              style: 'color:var(--muted)' },
+            { val: localTime(a.timestamp, 'datetime'), style: 'color:var(--muted)' },
             { val: a.ip,                             style: 'color:var(--accent)' },
             { val: a.port,                           style: '' },
             { val: a.attack_type,  cls: 'atype' },
@@ -475,11 +521,14 @@ async function fetchData() {
       }
     }
 
-    // Ticker bar
     if (attacks.length > 0) {
-      setText('ticker', attacks.slice(0, 8).map(a =>
-        `[${a.timestamp.slice(11, 19)}] ${a.ip}:${a.port} | ${a.attack_type.toUpperCase()} | ${a.country}`
-      ).join('   ◆   '));
+      const tickerText = attacks.slice(0, 8).map(a =>
+        `[${localTime(a.timestamp, 'time')}]\u2002${a.ip}:${a.port}\u2002${a.attack_type.toUpperCase()}\u2002${a.country}`
+      ).join('   ◆   ');
+      const t = document.getElementById('ticker');
+      const c = document.getElementById('ticker-clone');
+      if (t) t.textContent = tickerText + '   ◆   ';
+      if (c) c.textContent = tickerText + '   ◆   ';
     }
 
     setText('stat-total-sub', 'System status active');

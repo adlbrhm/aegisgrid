@@ -30,7 +30,10 @@
 
     <div class="ticker-wrap">
         <div class="ticker-label">LIVE FEED</div>
-        <div class="ticker-inner" id="ticker">Initialising threat feed...</div>
+        <div class="ticker-inner" id="ticker-track">
+            <span id="ticker">Initialising threat feed...</span>
+            <span id="ticker-clone" aria-hidden="true"></span>
+        </div>
     </div>
 
     <div class="main">
@@ -185,7 +188,7 @@
                 <span class="panel-badge" id="log-count">0 entries</span>
             </div>
             <div class="controls">
-                <input class="ctrl-input" type="text" id="search-input" placeholder="Search IP / country / type...">
+                <input class="ctrl-input" type="text" id="search-input" placeholder="Search IP, country, port, type...">
                 <select class="ctrl-select" id="type-filter">
                     <option value="">All types</option>
                     <option value="port_scan">Port scan</option>
