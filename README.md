@@ -3,11 +3,11 @@
 # 🛡️ AegisGrid — Threat Intelligence Platform
 **Enterprise-Grade Deception & Threat Intelligence Platform for ICS/SCADA Environments**
 
-[![Status](https://img.shields.io/badge/Status-UNDER%20DEVELOPMENT-FF8C00?style=for-the-badge&logo=github)](.)
+[![Status](https://img.shields.io/badge/Status-UNDER%20DEVELOPMENT-FF8C00?style=for-the-badge&logo=github)](https://github.com/adlbrhm/aegisgrid)
 [![Python](https://img.shields.io/badge/Python-3.12+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-3.1.3-000000?style=for-the-badge&logo=flask)](https://flask.palletsprojects.com)
 [![Scikit-Learn](https://img.shields.io/badge/ML-Scikit--Learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)](https://scikit-learn.org)
-[![License](https://img.shields.io/badge/License-MIT-2EA043?style=for-the-badge)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-2EA043?style=for-the-badge)](https://github.com/adlbrhm/aegisgrid/blob/main/LICENSE)
 
 </div>
 

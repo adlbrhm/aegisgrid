@@ -1,7 +1,7 @@
 #!/bin/bash
 # startup.sh — One command to relaunch the entire honeypot after reboot
 
-cd ~/honeypot-energy
+cd ~/aegisgrid
 source venv/bin/activate
 
 # Kill any existing tmux session
