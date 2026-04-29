@@ -39,5 +39,4 @@ logs/
 data/*.db
 data/*.sqlite
 ml/*.pkl
-docs/FinalReport.md
 scratch/
